@@ -1,7 +1,8 @@
 module AParser where
-  
+
 import Control.Applicative
 import Data.Char
+import Data.List (isInfixOf)
 
 -- A parser for a value of type a is a function which takes a String
 -- represnting the input to be parsed, and succeeds or fails; if it
@@ -43,12 +44,42 @@ Just ('x',"yz")
 -- integers.
 posInt :: Parser Integer
 posInt = Parser f
-  where
-    f xs
-      | null ns   = Nothing
-      | otherwise = Just (read ns, rest)
-      where (ns, rest) = span isDigit xs
+  where f xs
+          | null ns   = Nothing
+          | otherwise = Just (read ns, rest)
+          where (ns, rest) = span isDigit xs
 
 ------------------------------------------------------------
 -- Your code goes below here
 ------------------------------------------------------------
+first :: (a -> b) -> (a,c) -> (b,c)
+first f (a,c) = (f a,c)
+
+instance Functor Parser where
+  fmap f p = Parser $ fmap (first f) . (runParser p)
+
+instance Applicative Parser where
+  pure v    = Parser (\s -> Just (v,s))
+  p1 <*> p2 = Parser f
+    where f s = case (runParser p1 s) of
+                Nothing            -> Nothing
+                Just (transf,rest) -> first transf <$> runParser p2 rest
+
+instance Alternative Parser where
+  empty     = Parser (const Nothing)
+  p1 <|> p2 = Parser (\s -> runParser p1 s <|> runParser p2 s)
+
+-- Parsers defined using the Applicative interface:
+abParser :: Parser (Char,Char)
+abParser = (,) <$> char 'a' <*> char 'b'
+
+abParser_ :: Parser ()
+abParser_ = const () <$> abParser
+
+intPair :: Parser [Integer]
+intPair = skipSecondList <$> posInt <*> char ' ' <*> posInt
+  where skipSecondList x _ y = [x,y]
+
+-- Parser defined using the Alternative interface:
+intOrUppercase :: Parser ()
+intOrUppercase = const () <$> posInt <|> const () <$> satisfy isUpper 
