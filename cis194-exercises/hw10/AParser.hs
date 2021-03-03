@@ -59,15 +59,15 @@ instance Functor Parser where
   fmap f p = Parser $ fmap (first f) . (runParser p)
 
 instance Applicative Parser where
-  pure v    = Parser (\s -> Just (v,s))
-  p1 <*> p2 = Parser f
-    where f s = case (runParser p1 s) of
-                Nothing            -> Nothing
-                Just (transf,rest) -> first transf <$> runParser p2 rest
+  pure v    = Parser $ \s -> Just (v,s)
+  p1 <*> p2 = Parser $ \s ->
+    case (runParser p1 s) of
+      Nothing            -> Nothing
+      Just (transf,rest) -> first transf <$> runParser p2 rest
 
 instance Alternative Parser where
-  empty     = Parser (const Nothing)
-  p1 <|> p2 = Parser (\s -> runParser p1 s <|> runParser p2 s)
+  empty     = Parser $ const Nothing
+  p1 <|> p2 = Parser $ \s -> runParser p1 s <|> runParser p2 s
 
 -- Parsers defined using the Applicative interface:
 abParser :: Parser (Char,Char)
@@ -82,4 +82,4 @@ intPair = skipSecondList <$> posInt <*> char ' ' <*> posInt
 
 -- Parser defined using the Alternative interface:
 intOrUppercase :: Parser ()
-intOrUppercase = const () <$> posInt <|> const () <$> satisfy isUpper 
+intOrUppercase = const () <$> posInt <|> const () <$> satisfy isUpper
