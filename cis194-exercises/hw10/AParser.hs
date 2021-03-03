@@ -63,7 +63,7 @@ instance Applicative Parser where
   p1 <*> p2 = Parser $ \s ->
     case (runParser p1 s) of
       Nothing            -> Nothing
-      Just (transf,rest) -> first transf <$> runParser p2 rest
+      Just (transf,rest) -> runParser (transf <$> p2) rest
 
 instance Alternative Parser where
   empty     = Parser $ const Nothing
