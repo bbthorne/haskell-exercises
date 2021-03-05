@@ -1,4 +1,4 @@
-module AParser where
+module AParser (Parser, runParser, satisfy, char, posInt) where
 
 import Control.Applicative
 import Data.Char
@@ -28,17 +28,6 @@ satisfy p = Parser f
 -- see exactly the character c, and fails otherwise.
 char :: Char -> Parser Char
 char c = satisfy (== c)
-
-{- For example:
-
-*Parser> runParser (satisfy isUpper) "ABC"
-Just ('A',"BC")
-*Parser> runParser (satisfy isUpper) "abc"
-Nothing
-*Parser> runParser (char 'x') "xyz"
-Just ('x',"yz")
-
--}
 
 -- For convenience, we've also provided a parser for positive
 -- integers.
